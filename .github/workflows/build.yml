@@ -1,3 +1,4 @@
+
 name: Build iMessage APK
 
 on:
@@ -13,8 +14,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Extract project
-        run: |
-          unzip iMessage_Android_Starter.zip
+        run: unzip iMessage_Android_Starter.zip
 
       - uses: actions/setup-java@v4
         with:
@@ -24,6 +24,26 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+
+      - name: Align Java and Kotlin targets
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("iMessage/app/build.gradle.kts")
+          s = p.read_text()
+          s = s.replace(
+              '    buildFeatures { compose = true }',
+              '''    compileOptions {
+                  sourceCompatibility = JavaVersion.VERSION_17
+                  targetCompatibility = JavaVersion.VERSION_17
+              }
+              kotlinOptions {
+                  jvmTarget = "17"
+              }
+              buildFeatures { compose = true }'''
+          )
+          p.write_text(s)
+          PY
 
       - name: Build APK
         run: |
